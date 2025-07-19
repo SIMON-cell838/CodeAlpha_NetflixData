@@ -1,0 +1,52 @@
+# Plot : Hours Viewed by Global Availability
+global_availability_col = None
+if 'Availbale Globally?' in df.columns:
+        global_availability_col = 'Availbale Globally?'
+elif 'Available Globally?' in df.columns:
+        global_availability_col = 'Available Globally?'
+
+if global_availability_col and 'Hours Viewed' in df.columns and pd.api.types.is_numeric_dtype(df['Hours Viewed']) and not df[[global_availability_col, 'Hours Viewed']].empty:
+        global_hours = df.groupby(global_availability_col)['Hours Viewed'].sum().reset_index()
+
+        if not global_hours.empty:
+            plt.figure(figsize=(8, 6))
+            sns.barplot(x=global_availability_col, y='Hours Viewed', data=global_hours, palette='rocket')
+            plt.title('Total Hours Viewed by Global Availability')
+            plt.xlabel('Available Globally?')
+            plt.ylabel('Total Hours Viewed (Log Scale)')
+            plt.yscale('log')
+            plt.grid(axis='y', linestyle='--', alpha=0.7)
+            plt.tight_layout()
+            plt.show()
+            
+            print("Plot 'hours_viewed_by_global_availability'")
+        else:
+            print("No data available to generate 'Hours Viewed by Global Availability' plot.")
+else:
+        print("Required columns for Plot are not available, not numeric, or empty.")
+        if not global_availability_col:
+            print(f"Check if '{'Availbale Globally?' if 'Availbale Globally?' not in df.columns else 'Available Globally?'}' column exists for Plot 8.")
+
+# Plot : Average Hours Viewed per Title per Year by Content Type
+if 'Release Year' in df.columns and 'Content Type' in df.columns and 'Hours Viewed' in df.columns and \
+    pd.api.types.is_numeric_dtype(df['Hours Viewed']) and not df[['Release Year', 'Content Type', 'Hours Viewed']].empty:
+
+        avg_hours_per_year_type = df.groupby(['Release Year', 'Content Type'])['Hours Viewed'].mean().unstack(fill_value=0)
+
+        if not avg_hours_per_year_type.empty:
+            plt.figure(figsize=(12, 7))
+            sns.lineplot(data=avg_hours_per_year_type, markers=True, dashes=False)
+            plt.title('Average Hours Viewed Per Title Per Year by Content Type')
+            plt.xlabel('Release Year')
+            plt.ylabel('Average Hours Viewed (Log Scale)')
+            plt.yscale('log')
+            plt.legend(title='Content Type')
+            plt.grid(True, linestyle='--', alpha=0.7)
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            plt.show()
+            print("Plot 'avg_hours_per_title_per_year'")
+        else:
+            print("No data available to generate 'Average Hours Viewed per Title per Year' plot.")
+else:
+        print("Required columns for Plot are not available, not numeric, or empty.")
