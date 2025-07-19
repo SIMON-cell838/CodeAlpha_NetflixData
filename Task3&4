@@ -50,3 +50,57 @@ if 'Release Year' in df.columns and 'Content Type' in df.columns and 'Hours View
             print("No data available to generate 'Average Hours Viewed per Title per Year' plot.")
 else:
         print("Required columns for Plot are not available, not numeric, or empty.")
+
+# Calculate percentiles to define sentiment thresholds
+low_threshold = df['Hours Viewed'].quantile(0.33)  # Bottom 33%
+high_threshold = df['Hours Viewed'].quantile(0.66)  # Top 33%
+
+def assign_sentiment(viewership):
+    if viewership >= high_threshold:
+        return "Positive"
+    elif viewership <= low_threshold:
+        return "Negative"
+    else:
+        return "Neutral"
+
+df['Sentiment'] = df['Hours Viewed'].apply(assign_sentiment)
+sentiment_by_type = df.groupby(['Content Type', 'Sentiment']).size().unstack()
+print(sentiment_by_type)
+# Sentiment distribution by Content Type
+sns.countplot(data=df, x='Content Type', hue='Sentiment', palette=['dodgerblue', 'gray', 'darkorange'])
+plt.title("Sentiment by Content Type (Movie vs. Show)")
+plt.show()
+
+# Categorize into tiers (Low/Medium/High)
+df['Engagement_Tier'] = pd.qcut(
+    df['Hours Viewed'],
+    q=[0, 0.25, 0.75, 1],
+    labels=['Low', 'Medium', 'High']
+)
+emotion_rules = {
+    ('English', 'High'): 'Joy',
+    ('English', 'Low'): 'Sadness',
+    ('Korean', 'High'): 'Excitement',
+    ('Korean', 'Low'): 'Disappointment',
+    ('Non-English', 'High'): 'Interest',
+    ('Non-English', 'Low'): 'Indifference'
+}
+
+df['Behavioral_Emotion'] = df.apply(
+    lambda row: emotion_rules.get((row['Language Indicator'], row['Engagement_Tier']), 'Neutral'),
+    axis=1
+)
+plt.figure(figsize=(10, 6))
+sns.countplot(
+    data=df,
+    x='Language Indicator',
+    hue='Behavioral_Emotion',
+    palette='viridis',
+    edgecolor='black'
+)
+plt.title('Emotional Engagement by Language Indicator')
+plt.xlabel('Language')
+plt.ylabel('Number of Titles')
+plt.legend(title='Emotion', bbox_to_anchor=(1.05, 1))
+plt.tight_layout()
+plt.show()
